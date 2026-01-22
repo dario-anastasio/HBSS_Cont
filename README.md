@@ -28,6 +28,7 @@ A detailed description of the theory, algorithms, and examples is provided in:
 
 ## Getting started
 
+Tested on Matlab R2025b.
 Run any script in the `examples/` folder.
 Each example automatically adds the `src/` directory to the MATLAB path.
 
