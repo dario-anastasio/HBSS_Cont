@@ -1,6 +1,6 @@
 # HBSS_Cont
 
-**HBSS_Cont** is a MATLAB toolbox for nonlinear frequency response analysis
+**HBSS_Cont** is a Matlab toolbox for nonlinear frequency response analysis
 based on Harmonic Balance in extended state space combined with Pseudo-Arc-Length Continuation.
 
 The toolbox supports continuous and discrete-time state-space models,
@@ -29,6 +29,7 @@ A detailed description of the theory, algorithms, and examples is provided in:
 ## Getting started
 
 Tested on Matlab R2025b.
+
 Run any script in the `examples/` folder.
 Each example automatically adds the `src/` directory to the MATLAB path.
 
