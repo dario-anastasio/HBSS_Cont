@@ -1,2 +1,48 @@
 # HBSS_Cont
-HBSS_Cont is a MATLAB toolbox for nonlinear frequency response analysis using Harmonic Balance in extended state space with pseudo-arc-length continuation. It supports stability analysis via Floquet multipliers and automatic detection of Fold, Period-Doubling, and Neimark–Sacker bifurcations.
+
+**HBSS_Cont** is a MATLAB toolbox for nonlinear frequency response analysis
+based on Harmonic Balance in extended state space combined with Pseudo-Arc-Length Continuation.
+
+The toolbox supports continuous and discrete-time state-space models,
+user-defined nonlinearities and stability analysis of periodic
+solutions through Floquet multipliers, with automatic detection of
+Fold, Period-Doubling, and Neimark–Sacker bifurcations.
+
+---
+
+## Main features
+
+- Harmonic Balance formulation in extended state space
+- Pseudo-arc-length continuation of nonlinear frequency response curves
+- Support for theoretical and experimentally identified models
+- Stability analysis via monodromy matrix and Floquet multipliers
+- Automatic detection of bifurcation events
+
+---
+
+## Documentation
+
+A detailed description of the theory, algorithms, and examples is provided in:
+
+---
+
+## Getting started
+
+Run any script in the `examples/` folder.
+Each example automatically adds the `src/` directory to the MATLAB path.
+
+---
+
+## License
+
+See the `LICENSE` file for details.
+
+---
+
+## Citation
+
+If you use **HBSS_Cont** in academic work, please cite:
+
+> D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
+and stability analysis of randomly excited systems
+in the subspace framework, Nonlinear Dynamics, 2023. doi: https://doi.org/10.1007/s11071-023-08280-6
