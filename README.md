@@ -47,16 +47,22 @@ Disclaimer: this software is provided "as is", without warranty of any kind. The
 
 ## Citation
 
-If you use **HBSS_Cont** in academic work, please cite:
+If you use **HBSS_Cont** in academic work, please cite the following paper, which provides methodological description of the method:
 
-D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
-and stability analysis of randomly excited systems
-in the subspace framework, Nonlinear Dynamics, 2023. doi: https://doi.org/10.1007/s11071-023-08280-6
+**D. Anastasio, S. Marchesiello,** *Nonlinear frequency response curves estimation and stability analysis of randomly excited systems in the subspace framework.* **Nonlinear Dynamics**,  2023. DOI: [10.1007/s11071-023-08280-6](https://doi.org/10.1007/s11071-023-08280-6)
 
 ---
 
 ## References
 
-[1] D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
+The methodology implemented in this toolbox has been adopted and discussed in:
+
+[1] D. Anastasio, S. Marchesiello, *Nonlinear frequency response curves estimation
 and stability analysis of randomly excited systems
-in the subspace framework, Nonlinear Dynamics, 2023. doi: https://doi.org/10.1007/s11071-023-08280-6
+in the subspace framework*, Nonlinear Dynamics, 2023. DOI: [10.1007/s11071-023-08280-6](https://doi.org/10.1007/s11071-023-08280-6)
+
+[2] D. Anastasio, S. Marchesiello, G. Kerschen, *Estimation of the periodic solutions of geometrically nonlinear structures by broadband excitation*, Proceedings of ISMA2024. [Link](http://past.isma-isaac.be/downloads/isma2024/proceedings/Contribution_417_proceeding_3.pdf) 
+
+[3] D. Anastasio, G. Raze, G. Kerschen, *Frequency-domain system identification of nonlinear structures using experimental continuation data*, Journal of Vibration and Control, 2025. DOI: [10.1177/10775463251405337](https://doi.org/10.1177/10775463251405337) 
+
+[4] D. Anastasio, G. Raze, S. Marchesiello, G. Kerschen, *Identification of primary and secondary resonances: experimental continuation and broadband data-based modeling*, Nonlinear Dynamics, 2026.DOI: [10.1007/s11071-025-11940-4](https://doi.org/10.1007/s11071-025-11940-4) 
