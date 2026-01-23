@@ -38,7 +38,10 @@ Each example automatically adds the `src/` directory to the MATLAB path.
 
 ## License
 
-See the `LICENSE` file for details.
+This software is intended for research purposes and is released under the GNU General Public License v3 (GPLv3). See the `LICENSE` file for details.
+
+
+Disclaimer: this software is provided "as is", without warranty of any kind. The authors shall not be held liable for any inaccuracies in the results or damages resulting from the use of the code.
 
 ---
 
