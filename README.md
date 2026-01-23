@@ -1,11 +1,12 @@
 # HBSS_Cont
 
 **HBSS_Cont** is a Matlab toolbox for nonlinear frequency response analysis
-based on Harmonic Balance in extended state space combined with Pseudo-Arc-Length Continuation.
+based on Harmonic Balance in extended state space combined with pseudo-arc-length continuation.
 
-The toolbox supports continuous and discrete-time state-space models,
-user-defined nonlinearities and stability analysis of periodic
-solutions through Floquet multipliers, with automatic detection of
+The toolbox supports continuous and discrete-time state-space models, created analytically or identified experimentally with methods such as NSI (Nonlinear Subspace Identification) or NFR-ID. 
+
+Stability analysis of periodic
+solutions is also performed through Floquet multipliers, with automatic detection of
 Fold, Period-Doubling, and Neimark–Sacker bifurcations.
 
 ---
@@ -45,6 +46,14 @@ See the `LICENSE` file for details.
 
 If you use **HBSS_Cont** in academic work, please cite:
 
-> D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
+D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
+and stability analysis of randomly excited systems
+in the subspace framework, Nonlinear Dynamics, 2023. doi: https://doi.org/10.1007/s11071-023-08280-6
+
+---
+
+## References
+
+[1] D. Anastasio, S. Marchesiello, Nonlinear frequency response curves estimation
 and stability analysis of randomly excited systems
 in the subspace framework, Nonlinear Dynamics, 2023. doi: https://doi.org/10.1007/s11071-023-08280-6
