@@ -23,7 +23,7 @@ Fold, Period-Doubling, and Neimark–Sacker bifurcations.
 
 ## Documentation
 
-A detailed description of the theory, algorithms, and examples is provided in  `docs/HBSS_Cont_User_Guide.pdf`. 
+A detailed description of the theory, algorithms, and examples is provided in [User Guide](docs/HBSS_Cont_User_Guide.pdf). 
 
 ---
 
