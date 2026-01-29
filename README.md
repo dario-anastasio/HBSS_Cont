@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18413015.svg)](https://doi.org/10.5281/zenodo.18413015)
+
 # HBSS_Cont
 
 **HBSS_Cont** is a Matlab toolbox for nonlinear frequency response analysis
