@@ -29,7 +29,7 @@ fLim = [0.1 5]*1e-1;      % Frequency range [Hz]
 % =========================
 % Forcing
 % =========================
-F0 = 0.2;                 % Amplitude of harmonic forcing
+F0 = 0.3;                 % Amplitude of harmonic forcing
 
 % =========================
 % Scaling (important!)

@@ -22,7 +22,7 @@ dFNLvel{1} = @(y, yd) 0;
 Lnl(1)     = 1;
 
 % % (optional) Quadratic spring
-% mu(2)      = 0.1;                  % Quadratic coefficient
+% mu(2)      = 0.5;                  % Quadratic coefficient
 % fNL{2}     = @(y, yd) y.^2;
 % dFNL{2}    = @(y, yd) 2*y;
 % dFNLvel{2} = @(y, yd) 0;
