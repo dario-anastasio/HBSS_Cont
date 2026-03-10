@@ -44,12 +44,6 @@ Harmonics = HB.Harmonics(:).';
 nH = numel(Harmonics)-1;
 ny = HB.ny;
 
-% Prepare options for bifurcation detection
-bifOpts = struct();
-bifOpts.tolCross = 1e-3;   % tolerance for crossing detection (abs(sigma)-1)
-% bifOpts.tolIm = 1e-3;          % tolerance to treat multiplier as real
-bifOpts.tolRad = 0.1;          % tolerance for phase calculation
-
 %% Frequency limits
 wMin = 2*pi*min(HB.fLim);
 if wMin==0 
@@ -122,20 +116,26 @@ end
 %% Initial guess from linear response at wMin
 
 Omega0 = wMin;
-Y0_phys = zeros(ny*(2*nH+1),1);
 
-% Target at HF with zero NL
-Fh0 = hbss_eval_forcing(HB, Omega0);
-Fext0 = [Fh0(:,ihF); zeros(HB.nNL,1)];
-Tm = 1i*HF*Omega0*eye(HB.nx) - HB.A;
-[Lt,Ut] = lu(Tm);
-He = HB.De + ((HB.C/Ut)*(Lt\HB.Be));
-ylin = He*Fext0; 
+if isfield(HB, 'x0') && ~isempty(HB.x0)
+    % Use the user-provided initial guess
+    Y0_phys = HB.x0;
+else
+    % Original HBSS_Cont logic (fundamental harmonic only)
+    Y0_phys = zeros(ny*(2*nH+1),1);
+    % Target at HF with zero NL
+    Fh0 = hbss_eval_forcing(HB, Omega0);
+    Fext0 = [Fh0(:,ihF); zeros(HB.nNL,1)];
+    Tm = 1i*HF*Omega0*eye(HB.nx) - HB.A;
+    [Lt,Ut] = lu(Tm);
+    He = HB.De + ((HB.C/Ut)*(Lt\HB.Be));
+    ylin = He*Fext0; 
+    baseHF = ny + (HF-1)*2*ny;
+    Y0_phys(baseHF + (1:ny))       = real(ylin);
+    Y0_phys(baseHF + ny + (1:ny))  = -imag(ylin);
+end
 
-baseHF = ny + (HF-1)*2*ny;
-Y0_phys(baseHF + (1:ny))       = real(ylin);
-Y0_phys(baseHF + ny + (1:ny))  = -imag(ylin);
-
+% Ensure the initial guess is correctly scaled
 Y0_scaled = HB.scaleY * Y0_phys;
 
 %% Output struct
@@ -144,14 +144,12 @@ out = struct();
 out.Omega  = [];
 out.freqHz = [];
 out.Y      = [];
-out.Yh     = [];   % complex harmonic coefficients
+out.Yh     = [];   
 out.Ymax   = [];
 out.Ymin   = [];
 out.nIter  = [];
 out.sigma  = {};
-out.stability = [];
 out.isStable  = [];       
-out.bif = struct('Fold',[],'PD',[],'NS',[],'label',[]);
 
 %% Plot setup
 if HB.plot.enable
@@ -165,13 +163,10 @@ if HB.plot.enable
 
     % instability and bifurcations
     hUnst = plot(ax1, NaN, NaN, '.', 'color', 0.6*[1 1 1], 'MarkerSize', 6, 'LineWidth', 1.0); % generic unstable
-    hFold = plot(ax1, NaN, NaN, 'ms', 'MarkerSize', 6, 'LineWidth', 1.2); % Fold
-    hPD   = plot(ax1, NaN, NaN, 'b^', 'MarkerSize', 6, 'LineWidth', 1.2); % PD
-    hNS   = plot(ax1, NaN, NaN, 'gd', 'MarkerSize', 6, 'LineWidth', 1.2); % NS
 
     xlabel(ax1,'Frequency (Hz)');
     ylabel(ax1,sprintf('|Y^{(1)}_%d|', HB.plot.chOut));
-    % legend(ax1, {'NFRC','Unstable','Fold','PD','NS'}, 'Location','northeast');
+    legend(ax1, {'NFRC','Unstable'}, 'Location','northeast');
     
     ax2 = subplot(2,2,3); grid(ax2,'on'); hold(ax2,'on'); box(ax2,'on');
     bar(ax2, Harmonics, 0.*Harmonics);
@@ -189,8 +184,10 @@ if HB.plot.enable
 
     stopBtn = uicontrol('Style','togglebutton','String','Stop',...
         'Units','normalized','Position',[0.01 0.01 0.06 0.05]);
+    pauseBtn = uicontrol('Style','togglebutton','String','Pause',...
+        'Units','normalized','Position',[0.01 0.07 0.06 0.05]);
 else
-    stopBtn = [];
+    stopBtn = [];  pauseBtn = [];
 end
 
 %% hmax vector for continuation
@@ -264,28 +261,7 @@ while contPoint(end) <= wMax
     stab = hbss_stability_monodromy(contPoint, HB);
     sigma = stab.sigma;
     out.sigma{end+1} = sigma;
-        
-    if numel(out.sigma) >= 2
-        sigma_prev = out.sigma{end-1};
-        sigma_cur  = sigma;
-        bif = hbss_classify_bifurcation_crossing(sigma_prev, sigma_cur, bifOpts);
-    else
-        % no previous point available
-        bif = hbss_classify_bifurcation_crossing([], sigma, bifOpts);
-    end
-    
-    % Save bifurcation/stability info in out
-    out.isStable(end+1,1)  = bif.stable;
-    out.bif.Fold(end+1,1)  = bif.Fold;
-    out.bif.PD(end+1,1)    = bif.PD;
-    out.bif.NS(end+1,1)    = bif.NS;
-    out.bif.label{end+1,1} = char(bif.label);
-    
-    % Print bifurcation info
-    if  ~strcmp(char(bif.label),'none')
-        disp([' * ',char(bif.label),' bifurcation detected at ',...
-            num2str(out.freqHz(end)),'Hz']);
-    end
+    out.isStable(end+1,1) = all(abs(sigma) <= 1 + 1e-5); 
 
     % Plot update
     if HB.plot.enable && (mod(k, HB.plot.updateEvery) ==0 || k == 1)
@@ -309,13 +285,15 @@ while contPoint(end) <= wMax
         bar(ax2, Harmonics, Acur);
         xlabel(ax2,'Harmonic');
         ylabel(ax2,'Amplitude');
-        ylim(ax2,[0 max(out.Ymax(ch,end))]); grid(ax2,'on');
-
+        try
+            ylim(ax2,[0 max(abs(out.Ymax(ch,end)))]); grid(ax2,'on');
+        catch
+        end
         % third plot
         cla(ax3);
         plot(ax3,cos(th),sin(th),'k'); hold(ax3,'on');
         xline(0,'k'); yline(0,'k');
-        if bif.stable
+        if out.isStable(end)
             plot(ax3,real(sigma),imag(sigma),'k.','MarkerSize',12);
         else
             plot(ax3,real(sigma),imag(sigma),'.','color',0.6*[1 1 1],'MarkerSize',12);
@@ -324,18 +302,24 @@ while contPoint(end) <= wMax
         % update NFRC markers using bifLabel
         f = out.freqHz(:);
         a = abs(squeeze(out.Yh(HF+1, ch, :)));
-        lab = string(out.bif.label(:));
-        set(hFold, 'XData', f(lab=="Fold"),     'YData', a(lab=="Fold"));
-        set(hPD,   'XData', f(lab=="PD"),       'YData', a(lab=="PD"));
-        set(hNS,   'XData', f(lab=="NS"),       'YData', a(lab=="NS"));
         set(hUnst, 'XData', f(out.isStable==0), 'YData', a(out.isStable==0));
 
         % drawnow;
         drawnow limitrate;
-        
+
+        if isvalid(pauseBtn) && get(pauseBtn,'Value') == 1
+            set(pauseBtn, 'String', 'Resume', 'BackgroundColor', [0.7 0.9 1.0]);
+            while isvalid(pauseBtn) && get(pauseBtn,'Value') == 1
+                pause(0.2);
+                drawnow;
+            end
+            if isvalid(pauseBtn)
+                set(pauseBtn, 'String', 'Pause', 'BackgroundColor', [0.94 0.94 0.94]);
+            end
+        end
         if ~isempty(stopBtn) && get(stopBtn,'Value')==1
             break;
-        end
+        end       
     end
 
     % Continuation step limiting
@@ -435,6 +419,9 @@ while contPoint(end) <= wMax
         h = min(2*h, max(hmaxVec));
     end
 end
+
+% Post-processing: bifurcation classification
+out = hbss_identify_bifurcations_post(out,HB.bifOpts);
 
 disp('--- End ---');
 
