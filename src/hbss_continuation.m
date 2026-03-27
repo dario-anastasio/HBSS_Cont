@@ -87,7 +87,8 @@ if isAutoScaleY
         scaleY_auto = 1e3; % fallback
         % Aref = NaN;
     else
-        Aref = prctile(ampLin,95);
+        Aref = sort(ampLin(:));
+        Aref = Aref(ceil(0.95*numel(Aref)));
         scaleY_auto = 10 / max(Aref, 1e-12);
 
         % Round to power of 10
