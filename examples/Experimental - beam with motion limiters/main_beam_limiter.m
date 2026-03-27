@@ -1,6 +1,6 @@
 %% examples/main_beam_limiter.m
 % HBSS_Cont - Example: Cantilever beam with motion limiters
-% State-space model obtained experimetnally with NFR-ID method
+% State-space model obtained experimentally with NFR-ID method
 
 clearvars; close all; clc;
 
@@ -18,7 +18,7 @@ addpath(srcDir);
 % Harmonic Balance
 % =========================
 Harmonics = 0:5;           % Harmonic indices [0 1 ... H]
-nSamples  = 2048;          % Time samples for AFT
+nSamples  = 1024;          % Time samples for AFT
 
 % =========================
 % Frequency range
@@ -28,7 +28,7 @@ fLim = [8 16];             % Frequency range [Hz]
 % =========================
 % Forcing
 % =========================
-F0 = 0.015;                 % Amplitude of harmonic forcing
+F0 = 0.3;                  % Amplitude of harmonic forcing
 
 % =========================
 % Scaling (important!)
@@ -41,8 +41,8 @@ scaleY = 'auto';           % Automatic selection
 % =========================
 % hmax: maximum allowed change per continuation step
 % hmin: minimum step size before stopping
-hmax = 0.2;               
-hmin = 1e-3;              
+hmax = 0.1;               
+hmin = 1e-4;              
 
 % =========================
 % Plotting
@@ -78,7 +78,6 @@ for ij = 1:J
 end
 
 % Analytic derivatives
-
 dFNL    = cell(J,1);   
 dFNLvel = cell(J,1);   
 
