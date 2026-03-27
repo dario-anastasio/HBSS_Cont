@@ -1,16 +1,23 @@
 function out = hbss_identify_bifurcations_post(out, opts)
-% HBSS_IDENTIFY_BIFURCATIONS_POST - Robust Bifurcation Analysis
+% HBSS_IDENTIFY_BIFURCATIONS_POST Bifurcation analysis 
 %
-% Logic:
-% 1. TRACK: Multiplier tracking for branch continuity.
-% 2. NS-CHECK: Neimark-Sacker is only valid if a COMPLEX CONJUGATE PAIR crosses.
-% 3. MEMORY: Stability recovery uses the same label as stability loss for consistency.
+% Steps:
+% 1. Sort multipliers to track their evolution
+% 2. Detect and classify bifurcations
+%
+% -------------------------------------------------------------------------
+% Author: Dario Anastasio (Politecnico di Torino)
+% Part of: HBSS_Cont toolbox
+% -------------------------------------------------------------------------
 
-nPoints = length(out.sigma);
+nPoints = length(out.sigma_unsorted);
 if nPoints < 2, return; end 
 
-nMult = length(out.sigma{1});
-rawSigma = cell2mat(cellfun(@(x) x(:), out.sigma, 'UniformOutput', false));
+nMult = length(out.sigma_unsorted{1});
+rawSigma = cell2mat(cellfun(@(x) x(:), out.sigma_unsorted, 'UniformOutput', false));
+
+% Delete unsorted sigma from out struct
+out = rmfield(out,"sigma_unsorted");
 
 % --- STEP 1: MULTIPLIER TRACKING ---
 sortedSigma = zeros(nMult, nPoints);
@@ -30,7 +37,7 @@ for i = 2:nPoints
     end
     sortedSigma(:, i) = currS(newOrder);
 end
-out.sigmaSorted = sortedSigma;
+out.sigma_sorted = sortedSigma;
 
 % --- STEP 2: DETECTION ---
 out.bif.Fold  = false(1, nPoints);

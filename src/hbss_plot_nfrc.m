@@ -29,6 +29,11 @@ function hbss_plot_nfrc(out, chOut, hPlot, varargin)
 %   - Fold: magenta square (ms)
 %   - PD: blue triangle (b^)
 %   - NS: green diamond (gd)
+%
+% -------------------------------------------------------------------------
+% Author: Dario Anastasio (Politecnico di Torino)
+% Part of: HBSS_Cont toolbox
+% -------------------------------------------------------------------------
 
 %% ---------------- Default parameters ----------------
 lineSpec  = '-';

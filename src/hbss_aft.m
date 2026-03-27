@@ -19,7 +19,7 @@ function [Fnl, yt, fnl, ytd] = hbss_aft(Yh, Omega, HB)
 
 assert(isscalar(Omega) && Omega > 0, 'Omega must be a positive scalar.');
 
-Nstep = HB.nSamples;
+nSamples = HB.nSamples;
 fNL   = HB.NL.fNL;
 nNL   = numel(fNL);
 
@@ -27,28 +27,28 @@ nNL   = numel(fNL);
 nH = nH1 - 1;
 
 % IFFT to time domain (periodic, one period)
-yt = zeros(ny, Nstep);
+yt = zeros(ny, nSamples);
 for iy = 1:ny
-    Yr = zeros(Nstep, 1);
+    Yr = zeros(nSamples, 1);
     Yr(1) = Yh(1, iy);
     Yr(2:nH+1) = Yh(2:nH+1, iy) / 2;
-    Yr(Nstep-nH+1:Nstep) = conj(Yh(nH+1:-1:2, iy)) / 2;
-    yt(iy, :) = ifft(Nstep * Yr).';
+    Yr(nSamples-nH+1:nSamples) = conj(Yh(nH+1:-1:2, iy)) / 2;
+    yt(iy, :) = ifft(nSamples * Yr).';
 end
 yt = real(yt);
 
 % Time step (one period)
 T  = 2*pi / Omega;
-dt = T / Nstep;
+dt = T / nSamples;
 
 % Periodic finite-difference derivative
-ytd = zeros(ny, Nstep);
-ytd(:, 2:Nstep-1) = (yt(:, 3:Nstep) - yt(:, 1:Nstep-2)) / (2*dt);
+ytd = zeros(ny, nSamples);
+ytd(:, 2:nSamples-1) = (yt(:, 3:nSamples) - yt(:, 1:nSamples-2)) / (2*dt);
 ytd(:, 1)         = (yt(:, 2) - yt(:, end)) / (2*dt);
 ytd(:, end)       = (yt(:, 1) - yt(:, end-1)) / (2*dt);
 
 % Nonlinear forces in time
-fnl = zeros(nNL, Nstep);
+fnl = zeros(nNL, nSamples);
 for inl = 1:nNL
     fnl(inl, :) = fNL{inl}(yt, ytd);
 end
@@ -57,7 +57,7 @@ fnl = real(fnl);
 % FFT back to one-sided coefficients
 Fnl = zeros(nNL, nH+1);
 for inl = 1:nNL
-    Fnlt = fft(fnl(inl, :)) / Nstep;
+    Fnlt = fft(fnl(inl, :)) / nSamples;
     Fnlt = Fnlt(1:nH+1);
     Fnlt(2:end) = 2 * Fnlt(2:end);
     Fnl(inl, :) = Fnlt;

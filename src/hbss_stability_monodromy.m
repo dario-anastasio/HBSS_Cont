@@ -12,6 +12,10 @@ function stab = hbss_stability_monodromy(y, HB)
 % Part of: HBSS_Cont toolbox
 % -------------------------------------------------------------------------
 
+if HB.ssType ~= 'c'
+    error('hbss_stability_monodromy requires a continuous-time model.');
+end
+
 Y_scaled = y(1:end-1);
 Omega    = abs(y(end));
 Harmonics = HB.Harmonics(:).';

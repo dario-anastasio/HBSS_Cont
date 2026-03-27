@@ -20,20 +20,13 @@ GNL = -Fnl(:,1:nH+1);
 % Target from extended transfer
 Yh_target = zeros(nH+1, ny);
 
-A  = HB.A;  Be = HB.Be;  C = HB.C;  De = HB.De;
-
 % Current force amplitude
 Fh = hbss_eval_forcing(HB, Omega);
 
 for ih = 1:(nH+1)
     h = Harmonics(ih);
-
-    Fext = [Fh(:,ih); GNL(:,ih)];
-    Tmat = 1i*h*Omega*eye(size(A)) - A;
-   
-    [Lt,Ut] = lu(Tmat);
-    He = De + ((C/Ut)*(Lt\Be));
-
+    Fext = [Fh(:,ih); GNL(:,ih)];    
+    He = hbss_extended_FRF(HB, h, Omega);
     y_h = He * Fext;          
     Yh_target(ih,:) = y_h.';   
 end
@@ -49,6 +42,7 @@ aux.Yh_unknown = Yh_unknown;
 aux.Yh_target  = Yh_target;
 aux.Fnl       = Fnl;
 aux.FNL       = GNL;
+aux.Fh        = Fh;
 aux.yt        = yt;
 aux.ytd       = ytd;
 aux.fnl_time  = fnl;

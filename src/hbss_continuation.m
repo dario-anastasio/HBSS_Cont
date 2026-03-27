@@ -11,9 +11,11 @@ function out = hbss_continuation(HB)
 % -------------------------------------------------------------------------
 % The output struct 'out' contains:
 %   - out.freqHz, out.Omega
-%   - out.Yh      : complex harmonic coefficients (one-sided)
+%   - out.Yh      : complex harmonic coefficients of the outputs (one-sided)
+%   - out.Xh      : complex harmonic coefficients of the states (one-sided)
 %   - out.Ymax/Ymin : time-domain extrema for all output channels
 %   - out.isStable: 1/0 stability information
+%   - out.sigma_sorted : Floquet multipliers
 %   - out.bif : bifurcation classification
 %
 % -------------------------------------------------------------------------
@@ -26,20 +28,6 @@ function out = hbss_continuation(HB)
 % --------------------------------------------------
 HB = hbss_validate_model(HB);
 
-% If model is discrete -> convert it to continuous
-if HB.ssType=='d'
-    sysd = struct('A',HB.A,'Be',HB.Be,'C',HB.C,'De',HB.De);
-    sysc = hbss_d2c_zoh(sysd, HB.Ts);
-
-    HB.A  = sysc.A;
-    HB.Be = sysc.Be;
-    HB.C  = sysc.C;
-    HB.De = sysc.De;
-
-    HB.ssType = 'c';
-    HB.Ts = 0;
-end
-
 Harmonics = HB.Harmonics(:).';
 nH = numel(Harmonics)-1;
 ny = HB.ny;
@@ -51,7 +39,7 @@ if wMin==0
 end
 wMax = 2*pi*max(HB.fLim);
 
-HF = 1; % fundamental for plotting & forcing channel indexing
+HF = 1; % Forcing at fundamental harmonic only
 ihF = find(Harmonics==HF,1);
 assert(~isempty(ihF),'Harmonics must include HF=1.');
 
@@ -66,7 +54,7 @@ if isfield(HB,'scaleY')
         isAutoScaleY = true; % NaN/Inf -> auto
     end
 else
-    isAutoScaleY = true; % default auto if not provided
+    isAutoScaleY = true; % Default auto if not provided
 end
 
 if isAutoScaleY
@@ -85,9 +73,8 @@ if isAutoScaleY
         Fext = [Fh(:,ihF); zeros(HB.nNL,1)];
 
         % FRF matrix and outputs
-        Tm = 1i*HF*Om*eye(HB.nx) - HB.A;
-        [Lt,Ut] = lu(Tm);
-        He = HB.De + ((HB.C/Ut)*(Lt\HB.Be));
+        He = hbss_extended_FRF(HB, HF, Om);
+
         ylin = He*Fext; % ny×1 complex
 
         % Global metric over all outputs
@@ -121,14 +108,11 @@ if isfield(HB, 'x0') && ~isempty(HB.x0)
     % Use the user-provided initial guess
     Y0_phys = HB.x0;
 else
-    % Original HBSS_Cont logic (fundamental harmonic only)
+    % Estimate from underlying-linear model
     Y0_phys = zeros(ny*(2*nH+1),1);
-    % Target at HF with zero NL
     Fh0 = hbss_eval_forcing(HB, Omega0);
     Fext0 = [Fh0(:,ihF); zeros(HB.nNL,1)];
-    Tm = 1i*HF*Omega0*eye(HB.nx) - HB.A;
-    [Lt,Ut] = lu(Tm);
-    He = HB.De + ((HB.C/Ut)*(Lt\HB.Be));
+    He = hbss_extended_FRF(HB, HF, Omega0);
     ylin = He*Fext0; 
     baseHF = ny + (HF-1)*2*ny;
     Y0_phys(baseHF + (1:ny))       = real(ylin);
@@ -143,12 +127,12 @@ Y0_scaled = HB.scaleY * Y0_phys;
 out = struct();
 out.Omega  = [];
 out.freqHz = [];
-out.Y      = [];
 out.Yh     = [];   
 out.Ymax   = [];
 out.Ymin   = [];
+out.Xh     = [];   
 out.nIter  = [];
-out.sigma  = {};
+out.sigma_unsorted  = {};   % Temporary variable
 out.isStable  = [];       
 
 %% Plot setup
@@ -161,7 +145,6 @@ if HB.plot.enable
     hNFRC = plot(ax1,NaN,NaN,'k-','LineWidth',1.5);
     set(ax1,'xlim',HB.fLim);
 
-    % instability and bifurcations
     hUnst = plot(ax1, NaN, NaN, '.', 'color', 0.6*[1 1 1], 'MarkerSize', 6, 'LineWidth', 1.0); % generic unstable
 
     xlabel(ax1,'Frequency (Hz)');
@@ -223,7 +206,7 @@ end
 contPoint = [Ysol; Omega0];           % current solution
 contTangent = zeros(size(contPoint)); contTangent(end)=1; % initial tangent
 
-% initial step
+% Initial step
 h = max(hmin, max(hmaxVec));
 
 %% Continuation loop
@@ -238,7 +221,6 @@ while contPoint(end) <= wMax
     k = numel(out.freqHz);
     Y_scaled = contPoint(1:end-1);
     Y_phys   = Y_scaled / HB.scaleY;
-    out.Y(:,k)   = Y_phys;
     out.nIter(end+1,1) = nTry;
 
     % df estimate
@@ -257,11 +239,45 @@ while contPoint(end) <= wMax
     out.Ymax(:,k) = ymax;
     out.Ymin(:,k) = ymin;
 
-    % Stability and bifurcation detection
-    stab = hbss_stability_monodromy(contPoint, HB);
+    % Stability analysis
+    % - if model is continuous: use the native model
+    % - if model is discrete: use the continuous surrogate model stored in HB.sys_c
+    if HB.ssType == 'c'
+        stab = hbss_stability_monodromy(contPoint, HB);
+    else
+        HB_stab = HB;
+        HB_stab.A  = HB.sys_c.A;
+        HB_stab.Be = HB.sys_c.Be;
+        HB_stab.C  = HB.sys_c.C;
+        HB_stab.De = HB.sys_c.De;
+        HB_stab.Ts = 0;
+        HB_stab.ssType = 'c';
+        stab = hbss_stability_monodromy(contPoint, HB_stab);
+    end
     sigma = stab.sigma;
-    out.sigma{end+1} = sigma;
-    out.isStable(end+1,1) = all(abs(sigma) <= 1 + 1e-5); 
+    out.sigma_unsorted{end+1} = sigma;
+    out.isStable(end+1,1) = all(abs(sigma) <= 1 + 1e-5);
+
+    % Retrieve states
+    [~, aux] = hbss_residual(Y_scaled, contPoint(end), HB);
+    Uh_ext = [aux.Fh; aux.FNL].';
+    Xh_cur = zeros(length(HB.Harmonics), HB.nx);
+    for kk = 1:length(HB.Harmonics)
+        k_val = HB.Harmonics(kk);
+        rhs = HB.Be * Uh_ext(kk, :).';
+        if HB.ssType == 'c'
+            % Continuous-time model
+            Tmat = 1j * k_val * contPoint(end) * eye(HB.nx) - HB.A;
+        elseif HB.ssType == 'd'
+            % Discrete-time model
+            zh = exp(1j * k_val * contPoint(end) * HB.Ts);
+            Tmat = zh * eye(HB.nx) - HB.A;
+        else
+            error('Unknown HB.ssType.');
+        end
+        Xh_cur(kk, :) = (Tmat \ rhs).';
+    end
+    out.Xh(:,:,k) = Xh_cur;
 
     % Plot update
     if HB.plot.enable && (mod(k, HB.plot.updateEvery) ==0 || k == 1)
@@ -269,10 +285,10 @@ while contPoint(end) <= wMax
         ch = HB.plot.chOut;
         HF = 1;   
 
-        % harmonic coefficients at current point
+        % Hharmonic coefficients at current point
         Acur   = abs(Yh_cur(:,ch));    % magnitudes
         
-        % first plot
+        % First plot
         YhFund = squeeze(out.Yh(HF+1, ch, :));   % complex vector
         ampFund = abs(YhFund);
         set(hNFRC,'XData', out.freqHz, 'YData', ampFund);
@@ -280,7 +296,7 @@ while contPoint(end) <= wMax
             'f = %.4f Hz   |   df = %.3e Hz   |   iterations = %d', ...
             out.freqHz(end), df, out.nIter(end)));
 
-        % second plot
+        % Second plot
         cla(ax2);
         bar(ax2, Harmonics, Acur);
         xlabel(ax2,'Harmonic');
@@ -289,7 +305,8 @@ while contPoint(end) <= wMax
             ylim(ax2,[0 max(abs(out.Ymax(ch,end)))]); grid(ax2,'on');
         catch
         end
-        % third plot
+
+        % Third plot
         cla(ax3);
         plot(ax3,cos(th),sin(th),'k'); hold(ax3,'on');
         xline(0,'k'); yline(0,'k');
@@ -299,7 +316,7 @@ while contPoint(end) <= wMax
             plot(ax3,real(sigma),imag(sigma),'.','color',0.6*[1 1 1],'MarkerSize',12);
         end
 
-        % update NFRC markers using bifLabel
+        % Update NFRC markers using bifLabel
         f = out.freqHz(:);
         a = abs(squeeze(out.Yh(HF+1, ch, :)));
         set(hUnst, 'XData', f(out.isStable==0), 'YData', a(out.isStable==0));
@@ -420,8 +437,13 @@ while contPoint(end) <= wMax
     end
 end
 
-% Post-processing: bifurcation classification
+% ===================================================
+%  Post-processing: bifurcation classification
+% out.sigma_unsorted substituted with out.sigma_sorted
+
 out = hbss_identify_bifurcations_post(out,HB.bifOpts);
+
+% ===================================================
 
 disp('--- End ---');
 

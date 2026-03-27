@@ -1,5 +1,10 @@
 function Fh = hbss_eval_forcing(HB, Omega)
 % HBSS_EVAL_FORCING Returns forcing Fourier coefficients at frequency Omega
+%
+% -------------------------------------------------------------------------
+% Author: Dario Anastasio (Politecnico di Torino)
+% Part of: HBSS_Cont tooolbox
+% -------------------------------------------------------------------------
 
 Harmonics = HB.Harmonics(:).';
 nH = numel(Harmonics) - 1;

@@ -33,6 +33,20 @@ else
     assert(HB.Ts > 0, 'Ts must be >0 for discrete models.');
     HB.ssType = 'd';
     HB.fs = 1/HB.Ts;
+
+    % Build continuous surrogate model for stability analisys
+    sysd = struct();
+    sysd.A  = HB.A;
+    sysd.Be = HB.Be;
+    sysd.C  = HB.C;
+    sysd.De = HB.De;
+
+    sysc = hbss_d2c_zoh(sysd, HB.Ts);
+    HB.sys_c = struct();
+    HB.sys_c.A  = sysc.A;
+    HB.sys_c.Be = sysc.Be;
+    HB.sys_c.C  = sysc.C;
+    HB.sys_c.De = sysc.De;
 end
 
 if ~isfield(HB,'nSamples'), HB.nSamples = 512; end
