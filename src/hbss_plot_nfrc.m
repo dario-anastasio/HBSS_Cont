@@ -211,7 +211,20 @@ for ch = chVec
         else
             % ----- Multiple harmonics: amplitude only, overlaid -----
             nCurves = numel(hVec);
-            cols = turbo(nCurves);
+            % cols = turbo(nCurves);
+
+            baseCols = [
+                0.00 0.00 0.00   % black
+                0.00 0.35 0.85   % blue
+                0.85 0.10 0.10   % red
+                0.00 0.60 0.30   % green
+                0.80 0.60 0.00   % dark yellow
+                0.55 0.25 0.75   % purple
+                0.00 0.70 0.70   % dark cyan
+                0.85 0.40 0.00   % orange
+                0.50 0.50 0.50   % grey
+            ];
+            cols = baseCols(mod(0:nCurves-1, size(baseCols,1)) + 1, :);
 
             figure('Color','w');
             ax1 = axes(); hold(ax1,'on'); grid(ax1,'on');
